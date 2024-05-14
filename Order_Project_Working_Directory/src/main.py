@@ -6,7 +6,6 @@ if __name__ == "__main__":
         print(str(order))
 
 
-class(products file handling)
 
 
 
