@@ -5,7 +5,7 @@ if __name__ == "__main__":
     for order in o_ui.orders:
         print(str(order))
 print(poo)
-
+print(cow)
 
 
 
