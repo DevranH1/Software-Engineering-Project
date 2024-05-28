@@ -1,48 +1,60 @@
-from db_logic_pkg.Product_DB import Product_DB  
+from db_logic_pkg.Product_DB import Product_DB
 import os
-
 class All_Products_DB():
     def __init__(self):
-        self.all_products = []
-        self.file_path = Product_DB.file_path
-        self.file_name = Product_DB.file_name
-
+        self.all_products=[]
+        self.read_all_products()
+    
+    #append new product to file 
+    def save_new_product(self, product:Product_DB)->bool:
+        is_valid=True
+        for p in self.all_products:
+            if p.name == Product_DB.name:
+                is_valid=False
+                break
+        if is_valid:
+            self.all_products.append(product)
+            product.save()
+        return is_valid
+    
     def read_all_products(self):
-        try:
-            with open(self.file_path + self.file_name, "r") as f:
-                for line in f:
-                    name, unit_price, stock_quantity = line.strip().split(', ')
-                    unit_price = float(unit_price)
-                    stock_quantity = int(stock_quantity)
-                    product = Product_DB(name, unit_price, stock_quantity)
-                    self.all_products.append(product)
-                    
-        except Exception as e:
-            print("Error: " + str(e))
+        if not os.path.isfile(Product_DB.file_path+ Product_DB.file_name):       
+            f = open(Product_DB.file_path+ Product_DB.file_name, 'x')
+            f.close()
+        self.all_products.clear() 
+        offset=0
+        done = False
+        #to get the size of the file in bytes
+        statinfo = os.stat(Product_DB.file_path+ Product_DB.file_name)
+        #print(statinfo.st_size)
 
+        while offset <statinfo.st_size:
+            try:
+                product = Product_DB.read_product(offset,bytes=Product_DB.rec_length)
+                self.all_products.append(product)
+                offset=offset+1+Product_DB.rec_length
+            except StopIteration: #When end of file is encountered, StopIteration exception is raised.
+                print("Error while reading all recs in product.txt")
+
+    #overwrite the file with the data in all_products 
     def save_all_products(self):
-        try:
-            with open(self.file_path + self.file_name, "w") as f:
-                for product in self.all_products:
-                    f.write(Product_DB.rec_template.format(product.name, product.unit_price, product.stock_quantity))
-        except Exception as e:
-            print("Error: " + str(e))
+        if os.path.exists(Product_DB.file_path+ Product_DB.file_name):
+            os.remove(Product_DB.file_path+ Product_DB.file_name)        
+        for rec in self.all_products:
+            rec.save()
+
+
+    
+    
+    def __str__(self)->type[str]:
+        star_line = "\n"+"-"*100+"\n"
+        product_details="Available products details are:\n"
+        for rec in self.all_products:
+            product_details += str(rec)
+        return (star_line+product_details+star_line)
+
 '''
-# Example usage
-all_products_db = All_Products_DB()
-
-# Read all products from the file
-all_products_db.read_all_products()
-
-# Add new products
-new_products = [Product_DB("Pencil", 5, 50), Product_DB("Marker", 7.5, 30)]
-all_products_db.all_products.extend(new_products)
-
-# Save all products to the file
-all_products_db.save_all_products()
-
-# Read all products again to verify
-all_products_db.read_all_products()
-for product in all_products_db.all_products:
-    print(product.name, product.unit_price, product.stock_quantity)
-'''
+all_recs = All_Products_DB()
+all_recs.read_all_products()
+for rec in all_recs.all_products:
+    print (rec.name)'''
